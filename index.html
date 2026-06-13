@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gleichungen lösen (KW)</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --good: #15803d;
+      --bad: #b91c1c;
+      --line: #d1d5db;
+      --soft: #eef2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      color: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 17px;
+      opacity: 0.95;
+      line-height: 1.45;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      margin-bottom: 18px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      font-weight: 700;
+      color: #374151;
+    }
+
+    select, input {
+      font-size: 18px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      transition: transform 0.05s ease, background 0.15s ease;
+    }
+
+    button:hover { background: var(--accent-dark); }
+    button:active { transform: scale(0.98); }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.secondary:hover { background: #d1d5db; }
+
+    .counter-box {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      color: #78350f;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 18px;
+      font-weight: 800;
+      min-width: 170px;
+      text-align: center;
+    }
+
+    .task-row, .work-row {
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 16px;
+      align-items: center;
+      margin: 14px 0;
+    }
+
+    .equation-box {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      background: var(--soft);
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 12px;
+    }
+
+    .formatted-equation {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) 36px minmax(160px, 1fr);
+      align-items: center;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .eq-left {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .eq-sign {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .eq-right {
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .command-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 34px;
+      font-weight: 700;
+      justify-content: center;
+    }
+
+    .command-box input {
+      width: 120px;
+      text-align: center;
+      font-weight: 700;
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+    }
+
+    .command-box input:focus,
+    .student-equation-part:focus {
+      outline: 3px solid rgba(34, 197, 94, 0.25);
+      border-color: #16a34a;
+    }
+    .student-equation-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) 36px minmax(160px, 1fr);
+      align-items: center;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .student-equation-part {
+      min-height: 58px;
+      font-size: 28px;
+      font-weight: 700;
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    #leftEquationInput {
+      text-align: right;
+    }
+
+    #rightEquationInput {
+      text-align: left;
+    }
+
+    .fixed-equals {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .student-equation-part::placeholder,
+    .command-box input::placeholder {
+      color: transparent;
+    }
+
+    .student-equation-part.locked,
+    .command-box input.locked {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .solved-banner {
+      display: none;
+      margin-top: 12px;
+      background: #dcfce7;
+      border: 3px solid #22c55e;
+      color: #14532d;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .solved-banner.visible {
+      display: block;
+    }
+
+    .hint {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 16px;
+      margin-top: 6px;
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      font-size: 17px;
+      line-height: 1.4;
+      display: none;
+    }
+
+    .message.good {
+      display: block;
+      background: #dcfce7;
+      color: #14532d;
+      border: 1px solid #86efac;
+    }
+
+    .message.bad {
+      display: block;
+      background: #fee2e2;
+      color: #7f1d1d;
+      border: 1px solid #fca5a5;
+    }
+
+    .message.info {
+      display: block;
+      background: #dbeafe;
+      color: #1e3a8a;
+      border: 1px solid #93c5fd;
+    }
+
+    .history-title {
+      font-size: 20px;
+      margin: 0 0 12px;
+    }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+      align-items: center;
+    }
+
+    .history-item:last-child { border-bottom: 0; }
+
+    .history-equation {
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .history-equation .formatted-equation {
+      grid-template-columns: minmax(140px, 1fr) 34px minmax(140px, 1fr);
+    }
+
+    .history-command {
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      color: #374151;
+    }
+
+    .solution {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--good);
+    }
+
+    details {
+      margin-top: 10px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--accent-dark);
+      font-size: 17px;
+    }
+
+    .examples {
+      margin-top: 10px;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .small {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .solution-steps {
+      margin-top: 10px;
+    }
+
+    .solution-row {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: 12px;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .solution-equation {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .solution-equation .formatted-equation {
+      grid-template-columns: minmax(140px, 1fr) 34px minmax(140px, 1fr);
+    }
+
+    .solution-command {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      color: #374151;
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 12px; }
+      h1 { font-size: 26px; }
+      .task-row, .work-row, .history-item {
+        grid-template-columns: 1fr;
+      }
+      .equation-box { font-size: 28px; }
+      .formatted-equation,
+      .student-equation-row,
+      .history-equation .formatted-equation,
+      .solution-equation .formatted-equation {
+        grid-template-columns: minmax(90px, 1fr) 28px minmax(90px, 1fr);
+      }
+      .command-box { font-size: 28px; }
+      .student-equation-part { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Gleichungen lösen (KW)</h1>
+      <p>Übe lineare Gleichungen Schritt für Schritt mit Äquivalenzumformungen. Schreibe rechts an den Kommandostrich, was du machst, und darunter die neue Gleichung.</p>
+    </header>
+
+    <section class="card">
+      <div class="controls">
+        <div class="left-controls">
+          <label for="level">Aufgabentyp:</label>
+          <select id="level">
+            <option value="noBrackets" selected>ohne Klammer</option>
+            <option value="withBrackets">mit Klammer</option>
+          </select>
+        </div>
+        <div class="right-controls">
+          <div class="counter-box">Gelöst: <span id="solvedCounter">0</span></div>
+          <button id="newTaskBtn">Neue Aufgabe</button>
+          <button class="secondary" id="showSolutionBtn">Lösung zeigen</button>
+          <button class="secondary" id="resetBtn">Zurücksetzen</button>
+        </div>
+      </div>
+      <p class="hint">Wähle oben <strong>ohne Klammer</strong> oder <strong>mit Klammer</strong>. Bei Klammeraufgaben gilt: <strong>K</strong> = Klammer auflösen, <strong>Z</strong> = zusammenfassen. Am Kommandostrich kannst du also z. B. <strong>K</strong>, <strong>Z</strong>, <strong>+x</strong>, <strong>-4</strong>, <strong>:4</strong> oder <strong>:(-1)</strong> schreiben.</p>
+    </section>
+
+    <section class="card">
+      <div class="task-row">
+        <div class="equation-box" id="currentEquation">3x + 4 = 12 - x</div>
+        <div class="command-box">| <input id="operationInput" autocomplete="off" /></div>
+      </div>
+
+      <div class="work-row">
+        <div class="student-equation-row">
+          <input id="leftEquationInput" class="student-equation-part" autocomplete="off" />
+          <div class="fixed-equals">=</div>
+          <input id="rightEquationInput" class="student-equation-part" autocomplete="off" />
+        </div>
+        <button id="checkBtn">Prüfen</button>
+      </div>
+
+      <div id="solvedBanner" class="solved-banner">Super gelöst! Alles richtig!</div>
+
+      <div id="message" class="message"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="history-title">Rechenweg</h2>
+      <div id="history"></div>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary>Hilfe für Schülerinnen und Schüler</summary>
+        <div class="examples">
+          <div><strong>Ziel:</strong> Am Ende soll nur noch <strong>x = Zahl</strong> stehen.</div>
+          <div><strong>Erlaubte Umformungen:</strong> Auf beiden Seiten dasselbe addieren, subtrahieren, multiplizieren oder dividieren.</div>
+          <div><strong>Beispiele:</strong> <code>| K</code> = Klammer auflösen, <code>| Z</code> = zusammenfassen, außerdem <code>| +x</code>, <code>| -4</code>, <code>| :4</code>, <code>| :(-1)</code></div>
+          <div><strong>Tipp:</strong> Erst alle x auf eine Seite bringen, dann die Zahlen auf die andere Seite.</div>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      a: 3,
+      b: 4,
+      c: -1,
+      d: 12,
+      solution: 2,
+      history: [],
+      solvedCount: 0,
+      currentTaskSolved: false,
+      solutionShown: false,
+      leftDisplay: null,
+      rightDisplay: null,
+      originalTask: null
+    };
+
+    const currentEquationEl = document.getElementById('currentEquation');
+    const operationInput = document.getElementById('operationInput');
+    const leftEquationInput = document.getElementById('leftEquationInput');
+    const rightEquationInput = document.getElementById('rightEquationInput');
+    const messageEl = document.getElementById('message');
+    const solvedBannerEl = document.getElementById('solvedBanner');
+    const historyEl = document.getElementById('history');
+    const levelEl = document.getElementById('level');
+    const solvedCounterEl = document.getElementById('solvedCounter');
+
+    document.getElementById('newTaskBtn').addEventListener('click', newTask);
+    document.getElementById('resetBtn').addEventListener('click', resetCurrentTask);
+    document.getElementById('checkBtn').addEventListener('click', checkStep);
+    document.getElementById('showSolutionBtn').addEventListener('click', showSolution);
+
+    operationInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') leftEquationInput.focus();
+    });
+
+    leftEquationInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') rightEquationInput.focus();
+    });
+
+    rightEquationInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') checkStep();
+    });
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randNonZero(min, max) {
+      let n = 0;
+      while (n === 0) n = randInt(min, max);
+      return n;
+    }
+
+    function saveOriginalTask() {
+      state.originalTask = {
+        a: state.a,
+        b: state.b,
+        c: state.c,
+        d: state.d,
+        solution: state.solution,
+        leftDisplay: state.leftDisplay,
+        rightDisplay: state.rightDisplay
+      };
+    }
+
+    function restoreOriginalTask() {
+      if (!state.originalTask) return;
+      state.a = state.originalTask.a;
+      state.b = state.originalTask.b;
+      state.c = state.originalTask.c;
+      state.d = state.originalTask.d;
+      state.solution = state.originalTask.solution;
+      state.leftDisplay = state.originalTask.leftDisplay;
+      state.rightDisplay = state.originalTask.rightDisplay;
+    }
+
+    function finishNewTask(message) {
+      state.history = [];
+      state.currentTaskSolved = false;
+      state.solutionShown = false;
+      saveOriginalTask();
+      setInputsLocked(false);
+      clearInputs();
+      updateDisplay();
+      setMessage(message, 'info');
+    }
+
+    function newTask() {
+      const mode = levelEl.value;
+
+      if (mode === 'withBrackets') {
+        newBracketTask();
+        return;
+      }
+
+      const solRange = [-10, 12];
+      const coefRange = [-9, 9];
+      const constRange = [-25, 25];
+
+      let a, b, c, d, x;
+      do {
+        x = randInt(solRange[0], solRange[1]);
+        a = randNonZero(coefRange[0], coefRange[1]);
+        c = randNonZero(coefRange[0], coefRange[1]);
+        b = randInt(constRange[0], constRange[1]);
+        d = (a - c) * x + b;
+      } while (a === c || d < constRange[0] * 2 || d > constRange[1] * 2);
+
+      state.a = a;
+      state.b = b;
+      state.c = c;
+      state.d = d;
+      state.solution = x;
+      state.leftDisplay = null;
+      state.rightDisplay = null;
+
+      finishNewTask('Neue Gleichung ohne Klammer erzeugt. Löse sie Schritt für Schritt.');
+    }
+
+    function newBracketTask() {
+      const x = randInt(-10, 12);
+      const type = Math.random() < 0.5 ? 'sign' : 'multiply';
+
+      if (type === 'sign') {
+        const outer = randInt(-10, 12);
+        const insideConst = randInt(-9, 9);
+        const insideCoef = randNonZero(-5, 5);
+        const sign = Math.random() < 0.5 ? 1 : -1;
+
+        const a = sign * insideCoef;
+        const b = outer + sign * insideConst;
+        const d = a * x + b;
+
+        state.a = a;
+        state.b = b;
+        state.c = 0;
+        state.d = d;
+        state.solution = x;
+        state.leftDisplay = formatOuterBracket(outer, sign, insideConst, insideCoef);
+        state.rightDisplay = expressionToString(0, d);
+      } else {
+        const factor = randNonZero(-5, 5);
+        const insideConst = randInt(-9, 9);
+        const insideCoef = 1;
+        const a = factor * insideCoef;
+        const b = factor * insideConst;
+        const d = a * x + b;
+
+        state.a = a;
+        state.b = b;
+        state.c = 0;
+        state.d = d;
+        state.solution = x;
+        state.leftDisplay = formatFactorBracket(factor, insideConst);
+        state.rightDisplay = expressionToString(0, d);
+      }
+
+      finishNewTask('Neue Gleichung mit Klammer erzeugt. Nutze am Kommandostrich K für Klammer auflösen und Z für zusammenfassen.');
+    }
+
+    function resetCurrentTask() {
+      restoreOriginalTask();
+      state.history = [];
+      state.currentTaskSolved = false;
+      state.solutionShown = false;
+      setInputsLocked(false);
+      clearInputs();
+      updateDisplay();
+      setMessage('Die ursprüngliche Aufgabe wurde wiederhergestellt. Du kannst sie noch einmal von vorne lösen.', 'info');
+    }
+
+    function setInputsLocked(locked) {
+      operationInput.disabled = locked;
+      leftEquationInput.disabled = locked;
+      rightEquationInput.disabled = locked;
+      operationInput.classList.toggle('locked', locked);
+      leftEquationInput.classList.toggle('locked', locked);
+      rightEquationInput.classList.toggle('locked', locked);
+      solvedBannerEl.classList.toggle('visible', locked);
+    }
+
+    function clearInputs() {
+      operationInput.value = '';
+      leftEquationInput.value = '';
+      rightEquationInput.value = '';
+      if (!operationInput.disabled) {
+        operationInput.focus();
+      }
+    }
+
+    function formatOuterBracket(outer, sign, insideConst, insideCoef) {
+      const signText = sign === 1 ? ' + ' : ' - ';
+      return expressionToString(0, outer) + signText + '(' + expressionToString(insideCoef, insideConst) + ')';
+    }
+
+    function formatFactorBracket(factor, insideConst) {
+      const factorText = factor === 1 ? '' : (factor === -1 ? '-' : String(factor));
+      return factorText + '(' + expressionToString(1, insideConst) + ')';
+    }
+
+    function getLeftDisplay() {
+      return state.leftDisplay !== null ? state.leftDisplay : expressionToString(state.a, state.b);
+    }
+
+    function getRightDisplay() {
+      return state.rightDisplay !== null ? state.rightDisplay : expressionToString(state.c, state.d);
+    }
+
+    function expressionToString(coef, constant) {
+      const parts = [];
+      if (coef !== 0) {
+        if (coef === 1) parts.push('x');
+        else if (coef === -1) parts.push('-x');
+        else parts.push(coef + 'x');
+      }
+      if (constant !== 0 || coef === 0) {
+        if (parts.length === 0) parts.push(String(constant));
+        else if (constant > 0) parts.push('+ ' + constant);
+        else parts.push('- ' + Math.abs(constant));
+      }
+      return parts.join(' ');
+    }
+
+    function equationToString(a, b, c, d) {
+      return expressionToString(a, b) + ' = ' + expressionToString(c, d);
+    }
+
+    function equationToHtml(a, b, c, d, leftText = null, rightText = null) {
+      const left = leftText !== null ? leftText : expressionToString(a, b);
+      const right = rightText !== null ? rightText : expressionToString(c, d);
+      return '<div class="formatted-equation">' +
+        '<span class="eq-left">' + escapeHtml(left) + '</span>' +
+        '<span class="eq-sign">=</span>' +
+        '<span class="eq-right">' + escapeHtml(right) + '</span>' +
+        '</div>';
+    }
+
+    function updateDisplay() {
+      currentEquationEl.innerHTML = equationToHtml(state.a, state.b, state.c, state.d, getLeftDisplay(), getRightDisplay());
+      renderHistory();
+      updateCounter();
+    }
+
+    function updateCounter() {
+      solvedCounterEl.textContent = String(state.solvedCount);
+    }
+
+    function renderHistory() {
+      historyEl.innerHTML = '';
+      if (state.history.length === 0) {
+        historyEl.innerHTML = '<p class="small">Noch keine geprüften Schritte.</p>';
+        return;
+      }
+
+      for (const item of state.history) {
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        row.innerHTML = '<div class="history-equation">' +
+          equationToHtml(item.a, item.b, item.c, item.d, item.leftDisplay || null, item.rightDisplay || null) +
+          '</div><div class="history-command">| ' + escapeHtml(item.operation) + '</div>';
+        historyEl.appendChild(row);
+      }
+    }
+
+    function parseOperation(raw) {
+      let s = String(raw).trim().toLowerCase();
+      s = s.split(' ').join('');
+      s = s.split(String.fromCharCode(9)).join('');
+      s = s.split(String.fromCharCode(10)).join('');
+      s = s.split(String.fromCharCode(13)).join('');
+
+      if (s === 'k') return { op: 'K', kind: 'special', number: null };
+      if (s === 'z') return { op: 'Z', kind: 'special', number: null };
+
+      s = s.replace(',', '.');
+      if (!s) return null;
+      s = s.replace('÷', ':').replace('·', '*').replace('×', '*');
+
+      const op = s.charAt(0);
+      let value = s.slice(1);
+      if (!['+', '-', '*', '/', ':'].includes(op)) return null;
+      if (!value) return null;
+
+      if (value.startsWith('(') && value.endsWith(')')) {
+        value = value.slice(1, -1);
+      }
+
+      if (value.includes('x')) {
+        if (op !== '+' && op !== '-') return null;
+        let coefText = value.replace('*x', 'x').replace('x', '');
+        if (coefText.startsWith('(') && coefText.endsWith(')')) {
+          coefText = coefText.slice(1, -1);
+        }
+        let coef;
+        if (coefText === '') coef = 1;
+        else coef = Number(coefText);
+        if (!Number.isFinite(coef)) return null;
+        return { op: op, kind: 'x', number: coef };
+      }
+
+      const number = Number(value);
+      if (!Number.isFinite(number)) return null;
+      if ((op === '/' || op === ':') && number === 0) return null;
+      return { op: op === ':' ? '/' : op, kind: 'number', number: number };
+    }
+
+    function applyOperation(eq, operation) {
+      let a = eq.a, b = eq.b, c = eq.c, d = eq.d;
+
+      if (operation.kind === 'special') {
+        return normalizeEq({ a: a, b: b, c: c, d: d });
+      }
+
+      if (operation.kind === 'x') {
+        const n = operation.number;
+        if (operation.op === '+') { a += n; c += n; }
+        else if (operation.op === '-') { a -= n; c -= n; }
+        else return null;
+      } else {
+        const n = operation.number;
+        if (operation.op === '+') { b += n; d += n; }
+        else if (operation.op === '-') { b -= n; d -= n; }
+        else if (operation.op === '*') { a *= n; b *= n; c *= n; d *= n; }
+        else if (operation.op === '/') { a /= n; b /= n; c /= n; d /= n; }
+      }
+
+      return normalizeEq({ a: a, b: b, c: c, d: d });
+    }
+
+    function normalizeEq(eq) {
+      const rounded = {};
+      for (const key of ['a', 'b', 'c', 'd']) {
+        let v = eq[key];
+        if (Math.abs(v - Math.round(v)) < 1e-10) v = Math.round(v);
+        rounded[key] = v;
+      }
+      return rounded;
+    }
+
+    function parseStudentEquation() {
+      const leftText = String(leftEquationInput.value).toLowerCase().replace(/\s+/g, '').replace(/,/g, '.');
+      const rightText = String(rightEquationInput.value).toLowerCase().replace(/\s+/g, '').replace(/,/g, '.');
+      const left = parseExpression(leftText);
+      const right = parseExpression(rightText);
+      if (!left || !right) return null;
+      return normalizeEq({ a: left.a, b: left.b, c: right.a, d: right.b });
+    }
+
+    function parseExpression(expr) {
+      if (!expr) return null;
+      let normalized = expr.replace(/-/g, '+-');
+      if (normalized.startsWith('+')) normalized = normalized.slice(1);
+      const terms = normalized.split('+').filter(Boolean);
+      let a = 0;
+      let b = 0;
+
+      for (let term of terms) {
+        if (term.includes('x')) {
+          term = term.replace('*x', 'x');
+          const coefText = term.replace('x', '');
+          let coef;
+          if (coefText === '' || coefText === '+') coef = 1;
+          else if (coefText === '-') coef = -1;
+          else coef = Number(coefText);
+          if (!Number.isFinite(coef)) return null;
+          a += coef;
+        } else {
+          const n = Number(term);
+          if (!Number.isFinite(n)) return null;
+          b += n;
+        }
+      }
+      return { a: a, b: b };
+    }
+
+    function eqClose(e1, e2) {
+      const directMatch = ['a', 'b', 'c', 'd'].every(function(k) {
+        return Math.abs(e1[k] - e2[k]) < 1e-9;
+      });
+      if (directMatch) return true;
+
+      const swappedMatch =
+        Math.abs(e1.a - e2.c) < 1e-9 &&
+        Math.abs(e1.b - e2.d) < 1e-9 &&
+        Math.abs(e1.c - e2.a) < 1e-9 &&
+        Math.abs(e1.d - e2.b) < 1e-9;
+
+      return swappedMatch;
+    }
+
+    function isSolved(eq) {
+      const xLeft = Math.abs(eq.a - 1) < 1e-9 && Math.abs(eq.b) < 1e-9 && Math.abs(eq.c) < 1e-9;
+      const xRight = Math.abs(eq.c - 1) < 1e-9 && Math.abs(eq.d) < 1e-9 && Math.abs(eq.a) < 1e-9;
+      return xLeft || xRight;
+    }
+
+    function checkStep() {
+      const operation = parseOperation(operationInput.value);
+      if (!operation) {
+        setMessage('Die Umformung rechts am Kommandostrich konnte nicht gelesen werden. Beispiel: K, Z, +x, +4x, -4x, -4, :4, :(-1) oder *2.', 'bad');
+        return;
+      }
+
+      const expected = applyOperation(state, operation);
+      if (!expected) {
+        setMessage('Diese Umformung ist hier nicht erlaubt. Mit x darfst du addieren oder subtrahieren, z. B. +x, +4x oder -3x.', 'bad');
+        return;
+      }
+
+      const student = parseStudentEquation();
+      if (!student) {
+        setMessage('Die neue Gleichung konnte nicht gelesen werden. Schreibe links und rechts jeweils einen gültigen Term, zum Beispiel links: 4x + 4 und rechts: 12.', 'bad');
+        return;
+      }
+
+      if (!eqClose(expected, student)) {
+        setMessage('Noch nicht richtig. Prüfe, ob du die Umformung wirklich auf beiden Seiten angewendet hast.', 'bad');
+        return;
+      }
+
+      state.history.push({
+        a: expected.a,
+        b: expected.b,
+        c: expected.c,
+        d: expected.d,
+        leftDisplay: leftEquationInput.value.trim() || null,
+        rightDisplay: rightEquationInput.value.trim() || null,
+        operation: operationInput.value.trim()
+      });
+
+      state.a = expected.a;
+      state.b = expected.b;
+      state.c = expected.c;
+      state.d = expected.d;
+      state.leftDisplay = leftEquationInput.value.trim() || null;
+      state.rightDisplay = rightEquationInput.value.trim() || null;
+
+      updateDisplay();
+      clearInputs();
+
+      if (isSolved(state)) {
+        if (!state.currentTaskSolved && !state.solutionShown) {
+          state.solvedCount += 1;
+          state.currentTaskSolved = true;
+          updateCounter();
+        }
+        setInputsLocked(true);
+        setMessage('Sehr gut! Die Gleichung ist gelöst. Ergebnis: ' + equationToString(state.a, state.b, state.c, state.d), 'good');
+      } else {
+        setMessage('Richtig. Jetzt der nächste Schritt.', 'good');
+      }
+    }
+
+    function showSolution() {
+      state.solutionShown = true;
+      const steps = solveAutomatically(state.a, state.b, state.c, state.d);
+      let html = '<strong>Möglicher Lösungsweg:</strong><div class="solution-steps">';
+      let current = { a: state.a, b: state.b, c: state.c, d: state.d };
+
+      for (const step of steps) {
+        html += '<div class="solution-row">' +
+          '<div class="solution-equation">' + equationToHtml(current.a, current.b, current.c, current.d) + '</div>' +
+          '<div class="solution-command">| ' + escapeHtml(step) + '</div>' +
+          '</div>';
+        current = applyOperation(current, parseOperation(step));
+      }
+
+      html += '<div class="solution-row">' +
+        '<div class="solution-equation">' + equationToHtml(current.a, current.b, current.c, current.d) + '</div>' +
+        '<div class="solution-command"></div>' +
+        '</div>';
+
+      html += '</div><span class="solution">Lösung: x = ' + escapeHtml(String(state.solution)) + '</span>';
+      setMessage(html, 'info', true);
+    }
+
+    function solveAutomatically(a, b, c, d) {
+      const steps = [];
+      if (c !== 0) {
+        steps.push((c > 0 ? '-' : '+') + (Math.abs(c) === 1 ? 'x' : Math.abs(c) + 'x'));
+      }
+      const newA = a - c;
+      if (b !== 0) {
+        steps.push((b > 0 ? '-' : '+') + Math.abs(b));
+      }
+      if (newA !== 1) {
+        steps.push(':' + newA);
+      }
+      return steps;
+    }
+
+    function setMessage(text, type, asHtml = false) {
+      messageEl.className = 'message ' + type;
+      if (asHtml) messageEl.innerHTML = text;
+      else messageEl.textContent = text;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    newTask();
+  </script>
+</body>
+</html>
